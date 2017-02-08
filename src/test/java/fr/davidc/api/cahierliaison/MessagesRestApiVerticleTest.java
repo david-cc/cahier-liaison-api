@@ -31,7 +31,7 @@ public class MessagesRestApiVerticleTest {
 	public void testMyApplication(TestContext context) {
 		final Async async = context.async();
 
-		vertx.createHttpClient().getNow(8080, "localhost", "/monitor", response -> {
+		vertx.createHttpClient().getNow(8081, "localhost", "/monitor", response -> {
 			response.handler(body -> {
 				context.assertTrue(body.toString().contains("UP"));
 				async.complete();

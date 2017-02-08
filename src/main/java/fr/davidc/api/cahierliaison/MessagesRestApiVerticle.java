@@ -17,6 +17,7 @@ import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
 
 /**
  * Verticle exposant l'API REST du cahier de liaison.
@@ -44,6 +45,17 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 			response.putHeader("content-type", "text/html").end("UP");
 		});
 
+		router.route().handler(CorsHandler.create("http://localhost:8080")
+			.allowedMethod(io.vertx.core.http.HttpMethod.GET)
+			.allowedMethod(io.vertx.core.http.HttpMethod.POST)
+			.allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+			.allowCredentials(true)
+			.allowedHeader("Access-Control-Allow-Method")
+			.allowedHeader("Access-Control-Allow-Origin")
+			.allowedHeader("Access-Control-Allow-Credentials")
+			.allowedHeader("Access-Control-Allow-Headers")
+			.allowedHeader("Content-Type"));
+		
 		// Routage REST
 		router.get("/api/messages").handler(this::getMessages);
 		router.get("/api/messages/:id").handler(this::getMessage);
@@ -51,27 +63,37 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		router.post("/api/messages").handler(this::createMessage);
 
 		// Création du serveur HTTP
-		vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8080),
-				result -> {
-					if (result.succeeded()) {
-						fut.complete();
-					} else {
-						fut.fail(result.cause());
-					}
-				});
+		vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8081),
+			result -> {
+				if (result.succeeded()) {
+					fut.complete();
+				} else {
+					fut.fail(result.cause());
+				}
+			});
 	}
 
 	private void getMessages(RoutingContext routingContext) {
 		// Headers
 		String userType = decodeHeader(routingContext.request(), HEADER_USERTYPE);
 		if (userType == null) {
-			routingContext.response().setStatusCode(400).end();
+			routingContext.response()
+				.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
+				.putHeader("Access-Control-Allow-Credentials", "true")
+				.setStatusCode(400).end();
 			return;
 		}
 		
 		String userName = decodeHeader(routingContext.request(), HEADER_USERNAME);
 		if (userName == null) {
-			routingContext.response().setStatusCode(400).end();
+			routingContext.response()
+				.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
+				.putHeader("Access-Control-Allow-Credentials", "true")	
+				.setStatusCode(400).end();
 			return;
 		}
 
@@ -88,11 +110,21 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 				}
 			}
 		} else {
-			routingContext.response().setStatusCode(400).end();
+			routingContext.response()
+				.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
+				.putHeader("Access-Control-Allow-Credentials", "true")
+				.setStatusCode(400).end();
 			return;
 		}
 
-		routingContext.response().putHeader("content-type", "application/json; charset=utf-8")
+		routingContext.response()
+			.putHeader("content-type", "application/json; charset=utf-8")
+			.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+			.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
+			.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
+			.putHeader("Access-Control-Allow-Credentials", "true")
 				.end(Json.encodePrettily(messagesToReturn.values()));
 	}
 
