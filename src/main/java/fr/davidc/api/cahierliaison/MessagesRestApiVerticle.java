@@ -51,7 +51,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		router.post("/api/messages").handler(this::createMessage);
 
 		// Création du serveur HTTP
-		vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8080),
+		vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8081),
 				result -> {
 					if (result.succeeded()) {
 						fut.complete();
