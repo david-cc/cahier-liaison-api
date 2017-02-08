@@ -45,7 +45,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 			response.putHeader("content-type", "text/html").end("UP");
 		});
 
-		router.route().handler(CorsHandler.create("http://localhost:8080")
+		router.route().handler(CorsHandler.create("*")
 			.allowedMethod(io.vertx.core.http.HttpMethod.GET)
 			.allowedMethod(io.vertx.core.http.HttpMethod.POST)
 			.allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
@@ -78,7 +78,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		String userType = decodeHeader(routingContext.request(), HEADER_USERTYPE);
 		if (userType == null) {
 			routingContext.response()
-				.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+				.putHeader("Access-Control-Allow-Origin", "*")
 				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
 				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
 				.putHeader("Access-Control-Allow-Credentials", "true")
@@ -89,7 +89,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		String userName = decodeHeader(routingContext.request(), HEADER_USERNAME);
 		if (userName == null) {
 			routingContext.response()
-				.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+				.putHeader("Access-Control-Allow-Origin", "*")
 				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
 				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
 				.putHeader("Access-Control-Allow-Credentials", "true")	
@@ -111,7 +111,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 			}
 		} else {
 			routingContext.response()
-				.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+				.putHeader("Access-Control-Allow-Origin", "*")
 				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
 				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
 				.putHeader("Access-Control-Allow-Credentials", "true")
@@ -121,7 +121,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 
 		routingContext.response()
 			.putHeader("content-type", "application/json; charset=utf-8")
-			.putHeader("Access-Control-Allow-Origin", "http://localhost:8080")
+			.putHeader("Access-Control-Allow-Origin", "*")
 			.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
 			.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
 			.putHeader("Access-Control-Allow-Credentials", "true")
