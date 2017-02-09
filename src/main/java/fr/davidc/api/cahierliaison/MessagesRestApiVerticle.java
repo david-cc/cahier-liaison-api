@@ -45,10 +45,13 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 			response.putHeader("content-type", "text/html").end("UP");
 		});
 
+		// Problème de CORS lors des tests avec le front AngularJS 
+		// depuis localhost et port différent => ajout de Headers
 		router.route().handler(CorsHandler.create("*")
 			.allowedMethod(io.vertx.core.http.HttpMethod.GET)
 			.allowedMethod(io.vertx.core.http.HttpMethod.POST)
 			.allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+			.allowedMethod(io.vertx.core.http.HttpMethod.PUT)
 			.allowCredentials(true)
 			.allowedHeader("Access-Control-Allow-Method")
 			.allowedHeader("Access-Control-Allow-Origin")
@@ -61,6 +64,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		router.get("/api/messages/:id").handler(this::getMessage);
 		router.route("/api/messages*").handler(BodyHandler.create());
 		router.post("/api/messages").handler(this::createMessage);
+		router.put("/api/messages/:id").handler(this::editMessage);
 
 		// Création du serveur HTTP
 		vertx.createHttpServer().requestHandler(router::accept).listen(config().getInteger("http.port", 8081),
@@ -77,23 +81,13 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		// Headers
 		String userType = decodeHeader(routingContext.request(), HEADER_USERTYPE);
 		if (userType == null) {
-			routingContext.response()
-				.putHeader("Access-Control-Allow-Origin", "*")
-				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
-				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
-				.putHeader("Access-Control-Allow-Credentials", "true")
-				.setStatusCode(400).end();
+			routingContext.response().setStatusCode(400).end();
 			return;
 		}
 		
 		String userName = decodeHeader(routingContext.request(), HEADER_USERNAME);
 		if (userName == null) {
-			routingContext.response()
-				.putHeader("Access-Control-Allow-Origin", "*")
-				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
-				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
-				.putHeader("Access-Control-Allow-Credentials", "true")	
-				.setStatusCode(400).end();
+			routingContext.response().setStatusCode(400).end();
 			return;
 		}
 
@@ -110,22 +104,13 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 				}
 			}
 		} else {
-			routingContext.response()
-				.putHeader("Access-Control-Allow-Origin", "*")
-				.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
-				.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
-				.putHeader("Access-Control-Allow-Credentials", "true")
-				.setStatusCode(400).end();
+			routingContext.response().setStatusCode(400).end();
 			return;
 		}
 
 		routingContext.response()
 			.putHeader("content-type", "application/json; charset=utf-8")
-			.putHeader("Access-Control-Allow-Origin", "*")
-			.putHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS")
-			.putHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, username, usertype")
-			.putHeader("Access-Control-Allow-Credentials", "true")
-				.end(Json.encodePrettily(messagesToReturn.values()));
+			.end(Json.encodePrettily(messagesToReturn.values()));
 	}
 
 	private void getMessage(RoutingContext routingContext) {
@@ -177,6 +162,7 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 			return;
 		}
 
+		// Creation du message
 		if (userType.equals(USERTYPE_PROFESSEUR)) {
 			final Message message = Json.decodeValue(routingContext.getBodyAsString(), Message.class);
 			messages.put(message.getId(), message);
@@ -188,6 +174,30 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 		}
 	}
 
+	private void editMessage(RoutingContext routingContext) {
+		// Headers
+		String userType = decodeHeader(routingContext.request(), HEADER_USERTYPE);
+		if (userType == null) {
+			routingContext.response().setStatusCode(400).end();
+			return;
+		}
+		
+		String userName = decodeHeader(routingContext.request(), HEADER_USERNAME);
+		if (userName == null) {
+			routingContext.response().setStatusCode(400).end();
+			return;
+		}
+		
+		// Edition du message
+		Message receivedMessage = Json.decodeValue(routingContext.getBodyAsString(), Message.class);
+		Integer msgIdToEdit = Integer.valueOf(routingContext.request().getParam("id"));
+		
+		messages.put(msgIdToEdit, receivedMessage);
+		
+		routingContext.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
+				.end();
+	}
+	
 	private String decodeHeader(HttpServerRequest request, String headerKey) {
 		if (request.getHeader(headerKey) == null) {
 			return null;
@@ -196,45 +206,59 @@ public class MessagesRestApiVerticle extends AbstractVerticle {
 	}
 	
 	private void initData() {
-		// Premier message
+		// 1er message
 		Message message1 = new Message();
 		message1.setTexte("Corps du message " + message1.getId());
 		message1.setDate(new Date());
-
-		List<Destinataire> destList = new ArrayList<Destinataire>();
+		
+		List<Destinataire> destList1 = new ArrayList<Destinataire>();
 		Destinataire parent1 = new Destinataire();
 		parent1.setNom("parent1");
 		parent1.setConfirmation(false);
-		destList.add(parent1);
-
-		Destinataire parent2 = new Destinataire();
-		parent2.setNom("parent2");
-		parent2.setConfirmation(false);
-		destList.add(parent2);
-		message1.setDestinataires(destList);
+		destList1.add(parent1);
+		message1.setDestinataires(destList1);
 		
 		messages.put(message1.getId(), message1);
 		
-		// Deuxieme message
+		// 2e message
 		Message message2 = new Message();
 		message2.setTexte("Corps du message " + message2.getId());
 		message2.setDate(new Date());
 		
 		List<Destinataire> destList2 = new ArrayList<Destinataire>();
-		destList2.add(parent1);
+		Destinataire parent2 = new Destinataire();
+		parent2.setNom("parent2");
+		parent2.setConfirmation(false);
+		destList2.add(parent2);
 		message2.setDestinataires(destList2);
 		
 		messages.put(message2.getId(), message2);
 		
-		// Troisieme message
+		// 3e message
 		Message message3 = new Message();
 		message3.setTexte("Corps du message " + message3.getId());
 		message3.setDate(new Date());
 		
 		List<Destinataire> destList3 = new ArrayList<Destinataire>();
-		destList3.add(parent2);
+		Destinataire parent3 = new Destinataire();
+		parent3.setNom("parent3");
+		parent3.setConfirmation(false);
+		destList3.add(parent3);
 		message3.setDestinataires(destList3);
 		
 		messages.put(message3.getId(), message3);
+		
+		// 4e message
+		Message message4 = new Message();
+		message4.setTexte("Corps du message " + message4.getId());
+		message4.setDate(new Date());
+
+		List<Destinataire> destList = new ArrayList<Destinataire>();
+		destList.add(parent1);
+		destList.add(parent2);
+		destList.add(parent3);
+		message4.setDestinataires(destList);
+		
+		messages.put(message4.getId(), message4);
 	}
 }
